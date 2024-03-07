@@ -3,26 +3,42 @@ let tasks = []
 function updateTime() {
     chrome.storage.local.get(["timer", "timeOption", "isRunning"], (res) => {
         const time = document.getElementById("time");
-        if (res.timer <= 0 && res.isRunning) {
-            if (res.timer === 0) {
-                playAudio();
-            }
-            return;
-        }
-        const minutes = `${res.timeOption - Math.ceil(res.timer / 60)}`.padStart(2, "0");
+        // Determine if the timer has already finished.
+        const hasFinished = res.timer >= res.timeOption * 60;
+        
+        let minutes = "00";
         let seconds = "00";
-        if (res.timer % 60 != 0) {
-            seconds = `${60 - res.timer % 60}`.padStart(2, "0");
+
+        if (!hasFinished) {
+            minutes = `${res.timeOption - Math.ceil(res.timer / 60)}`.padStart(2, "0");
+            if (res.timer % 60 !== 0) {
+                seconds = `${60 - res.timer % 60}`.padStart(2, "0");
+            }
         }
+
+        // Update the timer display accordingly.
         time.textContent = `${minutes}:${seconds}`;
+
+        // If the timer has finished and is still marked as running, stop it.
+        if (hasFinished && res.isRunning) {
+            chrome.storage.local.set({ isRunning: false }, () => {
+                playAudio(); // Play the audio only once when the timer first finishes.
+            });
+        }
+
+        // Update the start/pause button text based on timer status.
         startTimerBtn.textContent = res.isRunning ? "Pause Timer" : "Start Timer";
     });
 }
 
+
+// PlayAudio function stays the same
 function playAudio() {
-    const audio = new Audio('audio/tuturu.mp3');
+    const audio = new Audio(chrome.runtime.getURL('audio/tuturu.mp3'));
     audio.play();
 }
+
+
 
 function resetTimer() {
     chrome.storage.local.set({
@@ -30,8 +46,12 @@ function resetTimer() {
         isRunning: false,
     }, () => {
         const time = document.getElementById("time");
-        time.textContent = "00:00";
-        startTimerBtn.textContent = "Start Timer";
+        chrome.storage.local.get(["timeOption"], (res) => {
+            const minutes = `${res.timeOption}`.padStart(2, "0");
+            time.textContent = `${minutes}:00`;
+            startTimerBtn.textContent = "Start Timer";
+            updateTime();
+        });
     });
 }
 
@@ -48,7 +68,14 @@ startTimerBtn.addEventListener("click", () => {
 });
 
 const resetTimerBtn = document.getElementById("reset-timer-btn");
-resetTimerBtn.addEventListener("click", resetTimer);
+resetTimerBtn.addEventListener("click", () => {
+    chrome.storage.local.set({
+        timer: 0,
+        isRunning: false,
+    }, () => {
+        startTimerBtn.textContent = "Start Timer";
+    });
+});
 
 const addTaskBtn = document.getElementById("add-task-btn");
 addTaskBtn.addEventListener("click", () => addTask());
