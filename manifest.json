@@ -17,5 +17,11 @@
   "background": {
     "service_worker": "background.js"
   },
-  "options_page": "options/options.html"
+  "options_page": "options/options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["audio/tuturu.mp3"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
