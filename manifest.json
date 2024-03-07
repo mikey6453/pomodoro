@@ -20,7 +20,7 @@
   "options_page": "options/options.html",
   "web_accessible_resources": [
     {
-      "resources": ["audio/tuturu.mp3"],
+      "resources": ["audio"],
       "matches": ["<all_urls>"]
     }
   ]
